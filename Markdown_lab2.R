@@ -1,8 +1,8 @@
 ---
-title: "Lab2_RMarkdown"
+title: "Untitled"
 author: "mmz"
 date: "1/12/2022"
-output: html
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
