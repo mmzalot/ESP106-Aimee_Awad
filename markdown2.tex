@@ -1,0 +1,128 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\title{Markdown\_lab2}
+\author{mmz}
+\date{1/12/2022}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Markdown\_lab2},
+  pdfauthor={mmz},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+\maketitle
+
+\hypertarget{r-markdown-for-lab-2}{%
+\section{R Markdown for Lab 2}\label{r-markdown-for-lab-2}}
+
+Install.packages(`knitr')
+
+\hypertarget{chapter-8-functions}{%
+\subsection{Chapter 8 (Functions)}\label{chapter-8-functions}}
+
+\hypertarget{write-a-function-f-that-behaves-like-this}{%
+\subsubsection{1) Write a function `f' that behaves like
+this:}\label{write-a-function-f-that-behaves-like-this}}
+
+'\,'`\{f('Jim')\} '\,'\,'\{``hello Jim, how are you?''
+f=function(name)\{ paste(``hello'',name,``how are you?'') \}
+f(``Jim'')\}
+
+\hypertarget{write-a-function-sumofsquares-that-behaves-like-this}{%
+\subsubsection{2) Write a function `sumOfSquares' that behaves like
+this:}\label{write-a-function-sumofsquares-that-behaves-like-this}}
+
+d \textless- c(1,5,2,4,6,2,4,5) sumOfSquares(d)= 21.875
+
+'\,'\,'\{d=c(1,5,2,4,6,2,4,5) mv=mean(d) sumOfSquares=function(y,yy)\{
+y=mv - d yy=(y\^{}2) sum(yy) \} sumOfSquares(d)\}
+
+Finially, the method of computation for sum of squares is described:
+``To compute the''sum of squares'', subtract the mean value of all
+numbers from each number. Square these numbers and sum them'' and also
+notes \textsubscript{``(stretch goal: make a variant that can handle NA
+values - no extra points, just a challenge)''}
+
+\hypertarget{chapter-10-flow-control}{%
+\subsection{Chapter 10 (Flow control)}\label{chapter-10-flow-control}}
+
+To demonstrate if-loops introduced in this chapter, we are asked to sum
+sequences according to the following directions:
+
+\hypertarget{write-a-for-loop-that-adds-the-numbers-1-to-10}{%
+\subsubsection{3) Write a for loop that adds the numbers 1 to
+10}\label{write-a-for-loop-that-adds-the-numbers-1-to-10}}
+
+'\,'\,'\{x=0 for (i in 1:10)\{ x=x+i \} x print(x)\}
+
+The final print command here will yield a final answer of \emph{55}.
+
+\hypertarget{write-a-for-loop-that-adds-the-odd-numbers-between-1-and-10}{%
+\subsubsection{4) Write a for loop that adds the odd numbers between 1
+and
+10}\label{write-a-for-loop-that-adds-the-odd-numbers-between-1-and-10}}
+
+'\,'\,'\{y=0 for (i in 1:10) \{ if (i \%\% 2) y=y+i \} print(y)\}
+
+The final command indicates that the sum of odd numbers between 1 and 10
+is equal to \emph{25}.
+
+\end{document}
