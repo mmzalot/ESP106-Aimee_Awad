@@ -22,6 +22,7 @@ sum(yy)
 }
 sumOfSquares(d)
 
+
 ## > d <- c(1,5,2,4,6,2,4,5)
 ## > sumOfSquares(d)
 ## [1] 21.875
