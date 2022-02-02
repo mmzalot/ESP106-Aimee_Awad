@@ -1,0 +1,104 @@
+---
+title: "Lab 5"
+author: "Aimee"
+date: "1/1/22"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=TRUE} 
+require("knitr")
+opts_chunk$set(message=FALSE, warning=FALSE)
+opts_knit$set( root.dir = setwd("/home/aimee/Documents/ESP_106/Lab_5"))
+```
+
+#Lab 5
+
+_Due Tuesday Feb1st - Recommended to complete this before starting the midterm_
+
+First read in the countrytotals.csv data frame
+```{r echo=FALSE}
+
+country=read.csv("countrytotals.csv")
+
+```
+
+_1. What 5 countries had the worst plastic problem as measured by the number of pieces of trash picked up?_
+
+```{r echo=FALSE}
+
+sorted=country[order(country$total, decreasing = TRUE),]
+
+```
+
+**Answer: Nigeria, Philippines, Switzerland, India, Togo** 
+
+_2. Make a plot showing the distribution of volunteers across countries_
+
+```{r echo=FALSE}
+library(ggplot2)
+ggplot(sorted, aes(x=volunteers), col=country)+
+  stat_bin(breaks = c(0,100,500,1500, 5000, 10000, 50000,100000,200000,800000),color="darkgreen",fill="lightgreen")+
+  scale_x_continuous(trans="log",labels= scales::comma, breaks = c(0,100,500,1500, 5000, 10000, 50000,100000,200000,800000))+
+  
+  ggtitle("Volunteers by Country Count", subtitle = "Scale Adjusted")+
+  xlab("Volunteers") + ylab("Country Count")+
+  theme(
+    plot.title = element_text(color="darkgreen", size=14, face = "bold",hjust = 0.5),plot.subtitle = element_text(size = 12,face = "italic",hjust = 0.5), axis.text.x = element_text(angle = 45))
+```
+
+_3. Notice that there is a lot of variation across countries in the number of volunteers involved in trash pickup. What problem might that cause for the interpretation of your answer to question 1?_
+
+**Answer:* Most trash picked up does not necessarily mean that plastic pollution there is worse. A larger number of volunteers might mean more trash picked up, not necessarily that there is more trash than other countries with fewer volunteers where less trash is collected** 
+
+_4. Add a column to the data frame creating a variable that should be more closely related to the presence of plastic pollution in the country?_
+
+```{r echo=FALSE}
+sorted$log_vol=log(sorted$volunteers)
+sorted$plastic_presence=((sorted$num_events*sorted$log_vol)/(sorted$total))
+ppres=sorted[order(sorted$plastic_presence,decreasing=TRUE),]
+head(ppres)
+
+```
+
+_5. What 5 countries have the worst plastic pollution, as measured by this new variable?_
+
+```{r echo=FALSE}
+top5=ppres[c(1:5),]
+ggplot(top5, aes(x=country, y=plastic_presence))+
+  geom_col(color="darkgreen",fill="lightgreen")+
+  ggtitle("Plastic Pollution: Top 5 Countries", subtitle = "*Calculated using normalized volunteer count")+
+  xlab("Country") + ylab("Trash Collected per Volunteer")+
+  theme(plot.title = element_text(color="darkgreen", size=14, face = "bold",hjust = 0.5),plot.subtitle = element_text(size = 12,face = "italic",hjust = 0.5))
+
+```
+
+**Answer: Argentina, India, Indonesia, Malaysia, Mexico** 
+
+Now we will make a plot of the variation in the types of trash and how it differs around the world. Read in the continenttypes.csv data frame. This gives the breakdown of the different types of plastic collected on each continet in 2020 and the total number of pick up events.
+
+```{r echo=FALSE}
+cntt=read.csv("continenttypes.csv")
+
+```
+
+_6. Add a column to this data frame with a variable that captures the existence of different types of plastic trash, controlling for the intensity of the pick-up effort in different continent_
+
+```{r echo=FALSE}
+cntt$effort_adjusted=(cntt$total/cntt$events)
+head(cntt)
+
+```
+
+_7. Make a plot using ggplot showing both the total amount and distribution of types of plastic picked up in each continent in the average pick-up event._
+
+```{r echo=FALSE}
+ggplot(cntt, aes(x=continent,y=effort_adjusted,fill=plastic_type))+
+  geom_bar(position="stack",stat = "identity")+
+ggtitle("Trash Type by Continent")+
+  xlab("Continent") + ylab("Adjusted Count")+
+  theme(plot.title = element_text(color="darkgreen", size=14, 
+                                  face = "bold",hjust = 0.5),axis.text.x = element_text(angle = 25))+
+  scale_fill_discrete(name="Plastic Type",
+                    labels=c("Unkown","High Density Polyethylene","Low Density Polyethylene","Other","Polyester","Polypropylene","Polystyrene","PVC"))
+          
+```
