@@ -1,0 +1,126 @@
+---
+title: "Midterm 2"
+author: Aimee
+output: html_document
+---
+
+## Midterm 2
+```{r}
+knitr::opts_chunk$set(message=FALSE,error = FALSE,warning = FALSE, echo = TRUE)
+knitr::opts_knit$set(root.dir = "/home/aimee/Documents/ESP_106/Midterm_2/" )
+```
+
+This midterm will require two datasets:
+
+1. A NetCDF file containing four layers with data on landuse in China. Each layer gives the fraction of the grid cell with land in the following land-types: urban (layer 1), cropland (layer 2), grassland (layer 3) and forest (layer 4). This file is named chinalanduse_MODIS_2012.nc - MODIS refers to the satellite data it is derived from and it is for the year 2012. This data came from this cool website: <https://terra.ipums.org/>
+
+2. A shapefile with polygons of provincial boundaries in China - chn_admbnda_adm1_ocha_2020.shp
+
+You will want to consider using the packages sf, raster, tidyr and ggplot2
+
+1. Read in the land use data as a raster brick and the shapefile as an sf object (2 points)
+
+```{r}
+lnduse=raster::brick("/home/aimee/Documents/ESP_106/Midterm_2/Midterm_2/chinalanduse_MODIS_2012.nc")
+prv=sf::st_read("/home/aimee/Documents/ESP_106/Midterm_2/Midterm_2/Province Shapefile/chn_admbnda_adm1_ocha_2020.shp")
+```
+
+2a. Crop the land use raster brick to the same extent as the shapefile of Chinese provinces (1 point)
+
+```{r}
+library(raster)
+
+xtntpr=extent(prv)
+lnduse=crop(lnduse,xtntpr)
+
+print(extent(lnduse))
+print(xtntpr)
+
+```
+
+2b. Rename the layers in the raster brick so they provide information about what data is in each of the 4 layers (2 points)
+
+```{r}
+names(lnduse)=c("Urban","Cropland","Grassland","Forest")
+
+layrnames=print(names(lnduse))
+```
+
+3. Make a figure with four panels. Plot each raster brick layer on one of the panels and overlay the polygons of the Chinese provinces. Title each panel with the type of land use it shows. (4 points)
+
+BONUS: Not required for full points, but worth a bonus 2 points - use a for loop to make the four panels of your figure (2 BONUS points)
+
+```{r}
+library(raster)
+
+par(mfrow=c(2,2),mar=c(2,2,2,2),oma=c(0,0,2,4))
+
+for (i in 1:length(layrnames)) {
+plot(lnduse[[i]], legend=FALSE,main=names(lnduse[[i]]))
+plot(prv["geometry"],add=TRUE)
+}
+
+par(mfrow=c(1,1),new=FALSE,oma=c(0,0,0,0))
+plot(lnduse[[1]],legend.only=TRUE,legend.shrink=1,legend.width=1)
+title("Landuse in China",outer=FALSE,cex=2,font=2)
+
+```
+
+4a. Use the extract function in the raster package to find the fraction of each province in each of the four land use classes. [For this question you can assume all the grid cells have the same area] (3 points)
+
+
+```{r}
+library(raster)
+df=extract(lnduse,prv,fun="mean",df=TRUE, method="simple")
+
+setwd("/home/aimee/Documents/ESP_106/Midterm_2/")
+save(df,file="df.rdata")
+
+setwd("/home/aimee/Documents/ESP_106/Midterm_2/")
+load("df.rdata")
+```
+
+
+4b. Describe the potential problem with the area assumption made in 4a. How might it affect the calculation in that step? What could we do if we didn't want to make that assumption? (You don't have to do it, just describe in theory) (2 points)
+
+**Answer:The area assumption counts all cells with their centers in a polygon, therefore the fraction may overestimate the landuse area in that particular polygon. If we wanted to avoid that assumption, we could use the weights=TRUE argument but it is computationally very intensive for large rasters and large polygons.  **
+
+4c. Sum up the fractions in the four land classes for each province and plot as a histogram. Why do they not sum to 1? (2 points)
+```{r}
+dfnew=df
+dfnew$totes=rowSums(df[,2:5])
+dfnew$ID=prv$ADM1_EN
+
+hist(dfnew$totes, main= "Land Use by Province Historgram",xlab="Sum of Land Use Fractions", col="darkgreen")
+```
+
+(Note: there are two polygons for which land-use data is missing and therefore the sum will be 0 - don't worry about that)
+
+**Answer:The sum of land use for each province does not sum to one since some areas within the polygon may not be categorized and therefore are missing from the aggregate.**
+
+
+5a. Add in the names of the provinces to your data from step 4a (1 point)
+
+```{r}
+df$ID=prv$ADM1_EN
+```
+
+5b. Pivot the data frame so you have "tidy" data (i.e. one row for each province-landuse type) (2 points)
+
+```{r}
+tidydf=tidyr::pivot_longer(df, cols = 2:5)
+head(tidydf)
+```
+
+6. Make a graph showing the breakdown of urban, cropland, grassland, and forest for each province. (4 points)
+
+```{r}
+library(ggplot2)
+
+ggplot(tidydf,aes(fill=name,x=value,y=ID))+
+  geom_bar(position = "fill", stat = "identity")+
+  ggtitle("Land Use in China by Province")+xlab("Fraction Value")+ylab(NULL)
+
+```
+
+7. Upload your R markdown file, and your knitted output to Canvas. Push the R markdown file to your Github repository. (2 points)
