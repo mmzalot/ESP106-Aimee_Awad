@@ -1,0 +1,256 @@
+---
+title: "BLM_USGS"
+author: "mmz"
+date: "4/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="/home/aimee/Documents/BLM_USGS/Coding_Analysis/")
+library(readxl)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(ggcorrplot)
+```
+
+## Preliminary Coding Analysis for CEA Project
+
+Main Objectives:
+1. Basic Number Counts
+  - barplot for resource counts
+  - average resouces with CE per EA
+2. Word Clouds for Language Analysis
+  - question 21 and notes
+3. Question Counts / Tier Analysis  
+  - box plot for highest frequency yes questions
+  - yes counts per question with respect to resource and also region
+  -->Correlleogram 
+4. Statistical Significance
+  - running model to determine if one question in particular is an indicator of
+  highly rated eas (>3stars)
+  - running methods analysis, which questions were most impactful 
+
+5/2 To Do List:
+1. Incorporate prelim data cleaning chunk and run through
+2. Prelim charts, annotate and run through. Should include the following:
+  a- Table distribution of sample (Jen's stratified sample)
+  b- **If time allows: map with sampled states/regions and # sampled there
+  Resource Graph, count of resources analyzed
+  c- Resource Count w/ percent having CE analyzed (bar plot, ordered by highest CE)
+  d- Maybe finalize resource by yes/no/NAs, not sure how helpful this is
+  e- Identify top teired EAs, these will have highest star rating ***DO THIS FIRST, ANALYSIS TEAM CAN PULL AND CATHER DISCUSSION POINTS FOR THESE
+3. CE breakdowns, look only at those EAs with analyzed CEs and explore the following:
+  a- yes area line graph
+  b- most conclusively no questions, questions ordered by most no responses
+  c- identify outliers for closer examination
+  **DO OUTLIERS FIRST FOR ANALYSIS BY EXEC TEAM
+4. Broad analysis breakdown and statistical question analysis
+  a- take average of yelp reviews and compare with broad rating/populate broads with na rating
+  b- analyze broad by resource
+  c- try to find "choke point questions" or gate keeper questions with strong implications for overall EA quality
+  d- lumped, present/absent/categorized analysis 
+  
+### TWO MAIN OBJECTIVES:
+- highlight clear and consistent work being done by BLM staff within the cumulative effects section of EA's
+- identifying existing good examples of cumulatives effects 
+
+
+  
+# In this chunk we will focus on cleaning and standardizing the data. 
+
+```{r}
+
+# Read in  excel file.
+datsheet=readxl::read_excel("Master_Sheet.xlsx")
+
+# Rename columns for convenience. 
+colnames(datsheet)=c("Coder","EA_Number","EA_Name","Resource_Given","Resource_General","Broad_1","Broad_2","Broad_3", "Resource_4", 5:21, "21B",22, "22B", 23:26, "Notes","Stars","Project_Type")
+
+# Remove empty columns/rows.
+datsheet=datsheet[-c(1),-c(37)]
+
+
+# Creating a state column. Create a combined column to standardize resources. 
+
+## Though we listed some unique resources in the Resource_given column, we categorized them according to what standard resource they would likely fall under in the Resource_general column (e.g, unique Resource_given: "User Experience", Resource_general: Recreation). 
+
+datsheet=datsheet%>%
+  mutate(ST=substr(EA_Number,9,10))%>%
+  mutate(Resource_Main=coalesce(Resource_General,Resource_Given))
+
+# Standardizing NA values.
+datsheet[is.na(datsheet)]= "N/A"
+
+# Standardizing capitalization to all caps. 
+datsheet= mutate_all(datsheet,toupper)
+
+#Data is clean. Datsheet will remain base data frame with no further edits. 
+```
+
+```{r, resource count}
+# We are filtering 
+
+nobroad=datsheet%>%
+  filter(!Resource_Main=="BROAD")%>%
+  group_by(Resource_Main)%>%
+  mutate(Rcount=n())
+
+
+resource_count=ggplot(nobroad,aes(x=reorder(Resource_Main,Rcount)))+
+  geom_bar()+
+  theme_classic()+
+  coord_flip()
+
+resource_count
+```
+
+
+```{r, response count area graph} 
+
+#yes/no/na count by resource type
+
+count_No=function(nobroad) sum(nobroad[,(9:33)]=="NO")
+count_Yes=function(nobroad) sum(nobroad[,(9:33)]=="YES")
+count_NA=function(nobroad) sum(nobroad[,(9:33)]=="N/A")
+
+
+response_count=plyr::ddply(nobroad,"Resource_Main",c(nope= count_No, Yes= count_Yes, notapp=count_NA))
+
+#there is a great variation in responses for each resource. therefore, we will mutate the response df to indicate percentage of total questions rather than count.
+
+response_count=response_count%>%
+  mutate(rsum=rowSums(select(.,(2:4))))%>%
+  mutate("Y"=Yes/rsum,"N"=nope/rsum,"NullValues"=notapp/rsum)
+
+response_count=response_count%>%
+  select(.,c(1,6:8))%>%
+  pivot_longer(!Resource_Main,names_to = "Response",values_to = "percent")%>%
+  group_by(Resource_Main)%>%
+  mutate(Rcount=n())
+
+View(response_count)
+
+#plot to show composition of question response by resource
+
+qper=ggplot(response_count, aes(x=Resource_Main, y=percent, fill= Response))+
+  geom_bar(stat="identity")+
+  scale_fill_manual("Response Type",values = c("Y"="darkgreen","N"="red","NullValues"="goldenrod1"))+
+  coord_flip()
+
+qper
+
+```
+
+```{r, resources by frequency of CE analyzed}
+
+#counting frequency of cumulative effects analyzed
+
+CEonly=sum(datsheet$`Resource_4`=="Yes")/length(datsheet$`Resource_4`)
+
+```
+
+```{r, broad category analysis}
+
+broad=datsheet%>%
+  filter(Resource_Main=="BROAD")
+
+broad_No=function(broad) sum(broad[,(6:8)]=="NO")
+broad_Yes=function(broad) sum(broad[,(6:8)]=="YES")
+
+broad_count=plyr::ddply(broad,"Project_Type",c(nope= broad_No, Yes= broad_Yes))
+broad_count=broad_count%>%
+  pivot_longer(names_to = "response",values_to = nope,Yes)
+  
+View(broad_count)
+
+broad_count=ggplot(broad_count, aes(x=Project_Type))+
+  geom_bar(stat="identity")
+broad_count
+```
+
+
+```{r, area line chart for each question response}
+
+```
+
+```{r, top tier analysis}
+# For example sampling
+
+toptier=datsheet%>%
+  filter(!Stars=="N/A")%>%
+  filter(Stars>="4⭐")
+
+save(toptier,file="toptier.rdata")
+write.csv(toptier,"toptier.csv", row.names = FALSE)
+```
+
+```{r, CE only analysis}
+CEonly=datsheet%>%
+  filter(`Resource_4`== "YES")
+```
+
+```{r, Correlations}
+#
+#Begin Jim edits
+#correlation using complete observations (no NAs) 
+#helper function
+helperFunction <- function(x){
+    ifelse(x=="YES", 1,0)
+}
+#subset datasheet for columns 5 through 10 and change YES to 1 everything else to 0
+df <- datsheet%>% 
+  select('5','6','7','8','9', '10','22')%>%
+  filter(`5`!= "N/A")%>%
+  mutate_all(helperFunction)
+  
+corr1 <- model.matrix(~0+., data=df)%>%
+  cor(use="pairwise.complete.obs")%>%
+  ggcorrplot(show.diag = F, type = "lower", lab=TRUE, lab_size = 2)
+corrMartrix <- cor(df)
+corr1
+
+corrMartrix
+```
+
+
+```{r}
+#Now we are going to create a correlation model to identify questions that might indicate a relationship. To do this we need to standardize all response using a number. 
+
+## Yes and affirmative responses like "lumped", "categorized", and "clearly detailed" will be equal to 1.
+## No or "absent" for question 12 will be equal to 0.
+## Null values will not be considered. 
+
+# First we will start by using the data frame with only Cumulative Effects analyzed.
+
+CEonly=datsheet%>%
+  filter(`Resource_4`== "YES")
+
+CEonly[CEonly=="YES"]='1'
+CEonly[CEonly=="CATEGORIZED"]='1'
+CEonly[CEonly=="LUMPED"]='1'
+CEonly[CEonly=="CLEARLY DETAILED"]='1'
+CEonly[CEonly=="NO"]='-1'
+CEonly[CEonly=="ABSENT"]='-1'
+CEonly[CEonly=="N/A"]='0'
+
+#Jim's helpfunction no longer needed since DF changed to 1 and 0
+
+#subset datasheet for columns 5 through 10 and change YES to 1 everything else to 0 -- Aimee's new df w/ only 1/0 values
+library(dplyr)
+
+df <- CEonly%>% 
+  select('5','6','7','8','9', '10','22')%>%
+  filter('5'!="N/A")%>%
+  mutate_all(~as.numeric(.))
+
+View(df)
+corr1 <- model.matrix(~0+., data=df)%>%
+  cor(use="pairwise.complete.obs")%>%
+  ggcorrplot(show.diag = F, type = "lower", lab=TRUE, lab_size = 2)
+corrMartrix <- cor(df)
+corr1
+
+```
