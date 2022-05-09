@@ -226,29 +226,31 @@ corrMartrix
 # First we will start by using the data frame with only Cumulative Effects analyzed.
 
 CEonly=datsheet%>%
-  filter(`Resource_4`== "YES")%>%
-  mutate_all(as.character())
+  filter(`Resource_4`== "YES")
 
 CEonly[CEonly=="YES"]='1'
 CEonly[CEonly=="CATEGORIZED"]='1'
 CEonly[CEonly=="LUMPED"]='1'
 CEonly[CEonly=="CLEARLY DETAILED"]='1'
-CEonly[CEonly=="NO"]='0'
-CEonly[CEonly=="ABSENT"]='0'
+CEonly[CEonly=="NO"]='-1'
+CEonly[CEonly=="ABSENT"]='-1'
+CEonly[CEonly=="N/A"]='0'
 
 #Jim's helpfunction no longer needed since DF changed to 1 and 0
 
 #subset datasheet for columns 5 through 10 and change YES to 1 everything else to 0 -- Aimee's new df w/ only 1/0 values
-df <- CEonly%>% 
-  select('5','6','7','8','9', '10','22')
+library(dplyr)
 
+df <- CEonly%>% 
+  select('5','6','7','8','9', '10','22')%>%
+  filter('5'!="N/A")%>%
+  mutate_all(~as.numeric(.))
 
 View(df)
-cormod <- model.matrix(~0+., data=df)%>%
+corr1 <- model.matrix(~0+., data=df)%>%
   cor(use="pairwise.complete.obs")%>%
   ggcorrplot(show.diag = F, type = "lower", lab=TRUE, lab_size = 2)
-cormod
-
-
+corrMartrix <- cor(df)
+corr1
 
 ```
